@@ -9,21 +9,23 @@ const NavigationLink = ({item}: NavigationLinkProps) => {
     switch (item.status) {
         case "available":
             return(
-                <Link href={item.path}>
+                <Link href={item.path} className="">
                     {item.name}
                 </Link>
             )
         case "disabled":
             return(
-                <span>
+                <span className="hover:text-amber-700">
                     {item.name}
                 </span>
             )
         case "coming-soon":
             return(
-                <span>
+                <span className="group inline-flex items-center">
                     {item.name}
-                    <span> Coming Soon</span>
+                    <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-600 ease-in-out group-hover:max-w-32 group-hover:opacity-100">
+                        <span className="ml-2">Coming Soon</span>
+                    </span>
                 </span>
             )
         default:

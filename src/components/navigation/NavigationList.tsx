@@ -7,11 +7,12 @@ interface NavigationListProps {
 
 const NavigationList = ({navigation}: NavigationListProps) => {
     return (
-        <nav aria-label="Main Navigation">
+        <nav aria-label="Main navigation" className="flex items-center gap-6">
             {navigation.map((navLink) => (
                 <NavigationLink
-                key={navLink.path}
-                item={navLink}/>
+                    key={navLink.path}
+                    item={navLink}
+            />
             ))}
         </nav>
     );
