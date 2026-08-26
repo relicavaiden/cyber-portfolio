@@ -1,22 +1,45 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type Perspective = "neutral" | "engineering" | "security";
 
 const HomePageContent = () => {
     const [perspective, setPerspective] = useState<Perspective>("neutral");
 
+
+    useEffect(() => {
+        const savedPerspective = localStorage.getItem("portfolio-perspective");
+
+        if (
+            savedPerspective === "engineering" ||
+            savedPerspective === "security"
+        ) {
+            setPerspective(savedPerspective);
+        }
+        
+    }, []);
+
+    const handlePerspectiveChange = (newPerspective: Perspective) => {
+        setPerspective(newPerspective);
+
+        if (newPerspective === "neutral") {
+            localStorage.removeItem("portfolio-perspective");
+        } else {
+            localStorage.setItem("portfolio-perspective", newPerspective);
+        }
+    };
+
     return (
         <>
             {perspective === "neutral" && (
                 <>
                     <h2>Choose a path</h2>
-                    <button onClick={() => setPerspective("engineering")}>
+                    <button onClick={() => handlePerspectiveChange("engineering")}>
                         Engineering
                     </button>
 
-                    <button onClick={() =>setPerspective("security")}>
+                    <button onClick={() =>handlePerspectiveChange("security")}>
                         Security
                     </button>
                 </>
@@ -26,7 +49,7 @@ const HomePageContent = () => {
                 <>
                     <h2>Engineering</h2>
                     <p>Engineering intro</p>
-                    <button onClick={() => setPerspective("neutral")}>
+                    <button onClick={() => handlePerspectiveChange("neutral")}>
                         Choose another path
                     </button>
                 </>
@@ -37,7 +60,7 @@ const HomePageContent = () => {
                 <>
                     <h2>Security</h2>
                     <p>Security intro</p>
-                    <button onClick={() => setPerspective("neutral")}>
+                    <button onClick={() => handlePerspectiveChange("neutral")}>
                         Choose another path
                     </button>
                 </>
