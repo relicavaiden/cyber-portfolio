@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react";
+import HeroSection from "./HeroSection";
 
 type Perspective = "neutral" | "engineering" | "security";
 
@@ -45,27 +46,12 @@ const HomePageContent = () => {
                 </>
             )}
 
-            {perspective === "engineering" && (
+            {perspective !== "neutral" && (
                 <>
-                    <h2>Engineering</h2>
-                    <p>Engineering intro</p>
-                    <button onClick={() => handlePerspectiveChange("neutral")}>
-                        Choose another path
-                    </button>
+                    <HeroSection perspective={perspective} />
+                    <button onClick={() => handlePerspectiveChange("neutral")}>Choose another path</button>
                 </>
             )}
-            
-
-            {perspective === "security" && (
-                <>
-                    <h2>Security</h2>
-                    <p>Security intro</p>
-                    <button onClick={() => handlePerspectiveChange("neutral")}>
-                        Choose another path
-                    </button>
-                </>
-            )}
-
         </>
     );
 };
