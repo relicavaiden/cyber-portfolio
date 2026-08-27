@@ -32,18 +32,29 @@ const HomePageContent = () => {
     };
 
     return (
-        <>
-            {perspective === "neutral" && (
-                <>
-                    <h2>Choose a path</h2>
-                    <button onClick={() => handlePerspectiveChange("engineering")}>
-                        Engineering
-                    </button>
+        <section className="flex-1 flex flex-col justify-center-safe items-center pb-12">
 
-                    <button onClick={() =>handlePerspectiveChange("security")}>
-                        Security
-                    </button>
-                </>
+            <h1 className="text-2xl">Engineering | Architecture | Security</h1>
+
+            {perspective === "neutral" && (
+                <div className="space-y-8">
+
+                    <h2 className="pt-4 text-center">Choose a path</h2>
+
+                    <div className="flex gap-x-12 text-lg">
+                        <button
+                            className="text-2xl font-semibold cursor-pointer hover:underline focus-visible:outline-2 text-blue-600" 
+                            onClick={() => handlePerspectiveChange("engineering")}>
+                            Engineering
+                        </button>
+
+                        <button
+                            className="text-2xl font-semibold cursor-pointer hover:underline focus-visible:outline-2 text-red-600" 
+                            onClick={() =>handlePerspectiveChange("security")}>
+                            Security
+                        </button>
+                    </div>
+                </div>
             )}
 
             {perspective !== "neutral" && (
@@ -52,7 +63,7 @@ const HomePageContent = () => {
                     <button onClick={() => handlePerspectiveChange("neutral")}>Choose another path</button>
                 </>
             )}
-        </>
+        </section>
     );
 };
 
