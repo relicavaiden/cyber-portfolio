@@ -24,3 +24,40 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes engineering-enter {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+.engineering-enter {
+  animation: engineering-enter 400ms ease-in;
+}
+
+@keyframes security-enter {
+  from {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+.security-enter {
+  animation: security-enter 400ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .engineering-enter,
+  .security-enter {
+    animation: none;
+  }
+}
