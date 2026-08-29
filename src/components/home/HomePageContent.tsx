@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import HeroSection from "./HeroSection";
+import ProjectCard, { vulnerableSupportTicketProject } from "../projects/ProjectCard";
+
 
 type Perspective = "neutral" | "engineering" | "security";
 
@@ -60,6 +62,12 @@ const HomePageContent = () => {
             {perspective !== "neutral" && (
                 <>
                     <HeroSection perspective={perspective} />
+                    <ProjectCard
+                        title={vulnerableSupportTicketProject.title}
+                        summary={vulnerableSupportTicketProject.summary[perspective]}
+                        technologies={vulnerableSupportTicketProject.technologies}
+                        status={vulnerableSupportTicketProject.status}
+                    />
                     <button onClick={() => handlePerspectiveChange("neutral")}>Choose another path</button>
                 </>
             )}
