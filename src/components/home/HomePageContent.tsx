@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import HeroSection from "./HeroSection";
-import ProjectCard, { vulnerableSupportTicketProject } from "../projects/ProjectCard";
-
+import { vulnerableSupportTicketProject } from "@/data/projects";
+import ProjectCard from "../projects/ProjectCard";
 
 type Perspective = "neutral" | "engineering" | "security";
 
