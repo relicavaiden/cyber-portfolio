@@ -2,6 +2,7 @@ import Header from "@/components/navigation/Header";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { PerspectiveProvider } from "@/context/PerspectiveContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,9 +31,11 @@ export default function RootLayout({
     >
       <body className="min-h-dvh flex flex-col bg-black">
         <Header />
-        <main className="flex-1 flex">
-          {children}
-        </main>
+        <PerspectiveProvider>
+          <main className="flex-1 flex">
+            {children}
+          </main>
+        </PerspectiveProvider>
       </body>
     </html>
   );

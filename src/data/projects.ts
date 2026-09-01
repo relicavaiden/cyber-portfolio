@@ -1,3 +1,9 @@
+export type ProjectStatus = 
+    | "available"
+    | "disabled"
+    | "in-progress"
+    | "coming-soon";
+
 export const vulnerableSupportTicketProject = {
     title: "Support Ticket",
     summary: {

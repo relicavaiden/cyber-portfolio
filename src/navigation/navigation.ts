@@ -21,7 +21,7 @@ const about: NavigationItem = {
 const projects: NavigationItem = {
     name: "Projects",
     path: "/projects",
-    status: "disabled"
+    status: "available"
 };
 const blog: NavigationItem = {
     name: "Blog",

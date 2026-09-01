@@ -1,8 +1,4 @@
-type ProjectStatus = 
-    | "available"
-    | "disabled"
-    | "in-progress"
-    | "coming-soon";
+import type { ProjectStatus } from "@/data/projects";
 
 const statusLabels = {
     available: "Available",
