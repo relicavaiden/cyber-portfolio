@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum SeriesStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+model Series {
+  id Int @id @default(autoincrement())
+  title String
+  slug String @unique
+  description String?
+  status SeriesStatus @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  entries SeriesEntry[]
+}
+
+model Post {
+  id Int @id @default(autoincrement())
+  title String
+  slug String @unique
+  excerpt String?
+  body String?
+  status PostStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  seriesEntry SeriesEntry?
+}
+
+model SeriesEntry {
+  id Int @id @default(autoincrement())
+  seriesId Int
+  postId Int @unique
+  position Int
+
+  series Series @relation(fields: [seriesId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+  
+  @@unique([seriesId, position])
+}
