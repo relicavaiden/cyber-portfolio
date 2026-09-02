@@ -23,14 +23,14 @@ const ProjectCard = (
     } : ProjectCardProps
 ) => {
     return (
-        <article className="max-w-md flex flex-col gap-1">
+        <article className="w-full h-full flex flex-col gap-2 p-3 border border-dashed rounded-md">
             <div className="flex justify-between">
                 <h3 className="text-lg font-semibold">{title}</h3>
                 <p className="">{statusLabels[status]}</p>
             </div>
-            <p>{summary}</p>
+            <p className="text-pretty">{summary}</p>
 
-            <ul className="flex flex-wrap gap-2">
+            <ul className="flex flex-wrap p-1 gap-1">
                 {technologies.map((technology) => (
                     <li key={technology}
                      className="text-sm rounded-xl px-1 bg-slate-500 text-black">
