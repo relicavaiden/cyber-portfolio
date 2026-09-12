@@ -24,6 +24,15 @@ enum SeriesStatus {
   ARCHIVED
 }
 
+enum RelationshipType {
+  PREREQUISITE
+  REMEDIATION
+  VULNERABILITY
+  FOLLOW_UP
+  ADDITIONAL_READING
+  RELATED
+}
+
 model Series {
   id Int @id @default(autoincrement())
   title String
@@ -46,6 +55,11 @@ model Post {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   seriesEntry SeriesEntry?
+
+  postTags PostTag[]
+
+  outgoingRelationships PostRelationship[] @relation("SourcePostRelationships")
+  incomingRelationships PostRelationship[] @relation("TargetPostRelationships")
 }
 
 model SeriesEntry {
@@ -58,4 +72,38 @@ model SeriesEntry {
   post Post @relation(fields: [postId], references: [id])
   
   @@unique([seriesId, position])
+}
+
+model Tag {
+  id Int @id @default(autoincrement())
+  name String @unique
+  slug String @unique
+
+  postTags PostTag[]
+}
+
+model PostTag {
+  id Int @id @default(autoincrement())
+  postId Int
+  tagId Int
+
+  post Post @relation(fields: [postId], references: [id])
+  tag Tag @relation(fields: [tagId], references: [id])
+
+  @@unique([postId, tagId])
+}
+
+model PostRelationship {
+  id Int @id @default(autoincrement())
+  sourcePostId Int
+  targetPostId Int
+  relationshipType RelationshipType
+  targetAnchor String?
+  createdAt DateTime @default(now())
+
+  sourcePost Post @relation("SourcePostRelationships", fields: [sourcePostId], references: [id])
+
+  targetPost Post @relation("TargetPostRelationships", fields: [targetPostId], references: [id])
+
+  @@unique([sourcePostId, targetPostId, relationshipType])
 }
