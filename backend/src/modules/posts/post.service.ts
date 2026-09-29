@@ -65,7 +65,7 @@ export const publishPost = async (slug: string) => {
     });
 
     if (!post) {
-        throw new AppError("Post not found", 404)
+        throw new AppError("Post not found", 404);
     }
 
     if (post.status === PostStatus.PUBLISHED) {
@@ -83,4 +83,35 @@ export const publishPost = async (slug: string) => {
     })
 
     return publishedPost;
+}
+
+export const archivePost = async (slug: string) => {
+    const post  = await prisma.post.findUnique({
+        where: {
+            slug,
+        }
+    });
+
+    if (!post) {
+        throw new AppError("Post not found", 404);
+    }
+
+    if (post.status === PostStatus.DRAFT) {
+        throw new AppError("Post must be published first", 409);
+    }
+
+    if (post.status === PostStatus.ARCHIVED) {
+        throw new AppError("Post already archived", 409);
+    }
+
+    const archivedPost = await prisma.post.update({
+        where: {
+            slug,
+        },
+        data: {
+            status: PostStatus.ARCHIVED,
+        }
+    })
+
+    return archivedPost;
 }
