@@ -47,6 +47,28 @@ export const getPostBySlug = async (slug: string) => {
         where: { 
             slug,
             status: PostStatus.PUBLISHED,
+        },
+        include: {
+            outgoingRelationships: {
+                where: {
+                    targetPost: {
+                        status: PostStatus.PUBLISHED
+                    },
+                },
+                include: {
+                    targetPost: true,
+                },
+            },
+            incomingRelationships: {
+                where: {
+                    sourcePost: {
+                        status: PostStatus.PUBLISHED
+                    },
+                },
+                include: {
+                    sourcePost: true,
+                },
+            },
         }
     });
 
