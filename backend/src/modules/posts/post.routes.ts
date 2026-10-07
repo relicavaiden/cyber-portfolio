@@ -1,10 +1,12 @@
 import { Router } from "express";
-import { archivePostController, getPostBySlugController, getPublishedPostsController, publishPostController } from "./post.controller.js";
+import { archivePostController, getPostBySlugController, getPublishedPostsController, publishPostController, updatePostController } from "./post.controller.js";
 import { validateBody } from "../../middleware/validate.middleware.js";
-import { createPostSchema } from "./post.schema.js";
+import { createPostSchema, updatePostSchema } from "./post.schema.js";
 import { createPostController } from "./post.controller.js";
 import { createPostRelationshipSchema } from "./post-relationship.schema.js";
 import { createPostRelationshipController } from "./post-relationship.controller.js";
+import { createPostTagEntrySchema } from "./post-tag.schema.js";
+import { createPostTagEntryController } from "./post-tag.controller.js";
 
 const router = Router();
 
@@ -24,5 +26,17 @@ router.post(
     validateBody(createPostRelationshipSchema),
     createPostRelationshipController
 )
+
+router.patch(
+    "/:slug",
+    validateBody(updatePostSchema),
+    updatePostController
+);
+
+router.post(
+    "/:slug/tags",
+    validateBody(createPostTagEntrySchema),
+    createPostTagEntryController
+);
 
 export default router;

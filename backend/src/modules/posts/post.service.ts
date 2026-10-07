@@ -1,5 +1,5 @@
 import prisma from "../../lib/prisma.js";
-import type { CreatePostInput } from "./post.schema.js";
+import type { CreatePostInput, UpdatePostInput } from "./post.schema.js";
 import { AppError } from "../../lib/AppError.js";
 import { PostStatus } from "../../generated/prisma/enums.js";
 
@@ -136,4 +136,33 @@ export const archivePost = async (slug: string) => {
     })
 
     return archivedPost;
+}
+
+export const updatePost = async (
+    slug: string,
+    input: UpdatePostInput
+) => {
+    const post = await prisma.post.findUnique({
+        where: { slug },
+    });
+
+    if (!post) {
+        throw new AppError("Post not found", 404);
+    }
+
+    if (post.status !== PostStatus.DRAFT) {
+        throw new AppError("Post is not a draft", 409);
+    }
+    const updatedPost = await prisma.post.update({
+        where: { 
+            slug,
+        },
+        data: {
+            ...(input.title !== undefined && { title: input.title}),
+            ...(input.excerpt !== undefined && { excerpt: input.excerpt }),
+            ...(input.body !== undefined && { body: input.body }),
+        }
+    })
+
+    return updatedPost;
 }
