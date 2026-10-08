@@ -27,3 +27,27 @@ export const createTag = async (input: CreateTagInput) => {
 
         return tag;
 }
+
+export const updateTag = async (
+    slug: string,
+    input: CreateTagInput
+) => {
+    const tag = await prisma.tag.findUnique({
+        where: { slug }
+    });
+
+    if (!tag) {
+        throw new AppError("Tag not found", 404)
+    }
+
+    const updatedTag = await prisma.tag.update({
+        where: {
+            slug,
+        },
+        data: {
+            name: input.name
+        }
+    })
+
+    return updatedTag;
+}

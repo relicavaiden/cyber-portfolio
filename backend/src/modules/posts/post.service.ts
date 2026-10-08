@@ -49,6 +49,16 @@ export const getPostBySlug = async (slug: string) => {
             status: PostStatus.PUBLISHED,
         },
         include: {
+            seriesEntry: {
+                include: {
+                    series: true,
+                },
+            },
+            postTags: {
+                include: {
+                    tag: true,
+                },
+            },
             outgoingRelationships: {
                 where: {
                     targetPost: {
@@ -92,6 +102,10 @@ export const publishPost = async (slug: string) => {
 
     if (post.status === PostStatus.PUBLISHED) {
         throw new AppError("Post is already published", 409);
+    }
+
+    if (!post.body || post.body.trim().length === 0) {
+        throw new AppError("Post body is required before publishing", 400);
     }
 
     const publishedPost = await prisma.post.update({
