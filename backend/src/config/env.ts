@@ -7,3 +7,13 @@ if (!DATABASE_URL) {
 }
 
 export { DATABASE_URL };
+
+const sessionSecret = process.env.SESSION_SECRET;
+
+if (!sessionSecret) {
+    throw new Error("SESSION_SECRET is required");
+}
+
+const SESSION_SECRET: string = sessionSecret;
+
+export { SESSION_SECRET };
