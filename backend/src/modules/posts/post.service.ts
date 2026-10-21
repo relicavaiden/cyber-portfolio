@@ -180,3 +180,9 @@ export const updatePost = async (
 
     return updatedPost;
 }
+
+export const getAuthorPosts = async () => {
+    const posts = await prisma.post.findMany();
+
+    return posts;
+}

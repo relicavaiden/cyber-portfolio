@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { archivePost, getPostBySlug, getPublishedPosts, publishPost, updatePost } from "./post.service.js";
+import { archivePost, getAuthorPosts, getPostBySlug, getPublishedPosts, publishPost, updatePost } from "./post.service.js";
 import { createPost } from "./post.service.js";
 
 export const getPublishedPostsController = async (
@@ -58,3 +58,12 @@ export const updatePostController = async (
 
     return res.status(200).json(post);
 };
+
+export const getAuthorPostsController = async (
+    _req: Request,
+    res: Response
+) => {
+    const post = await getAuthorPosts()
+
+    return res.status(200).json(post)
+}
