@@ -125,50 +125,81 @@ export default function AuthorPostCard({
         onPostUpdated(publishedPost);
     }
     return (
-        <div>
-            <h2>{post.title}</h2>
-            <p>{post.status}</p>
+        
+        <div className="rounded-lg border p-5 shadow-sm">
+            <h2 className="font-semibold text-xl">{post.title}</h2>
+            <p className="mt-1 text-sm text-gray-500"
+            >
+                {post.status}
+            </p>
             {post.status === "DRAFT" && (
-                <div>
-                    <button onClick={() => setIsEditing(true)}>Edit</button>
+                <div className="mt-4 flex flex-wrap gap-2">
+                    <button 
+                        onClick={() => setIsEditing(true)}
+                        className="rounded-md border px-3 py-2 text-sm font-medium"
+                        >
+                            Edit
+                        </button>
                     
                     {isEditing && (
-                        <div>
+                        <div className="mt-4 flex w-full flex-col gap-4">
                             <input
                                 type="text"
                                 value={title}
                                 onChange={(event) => setTitle(event.target.value)}
+                                className="w-full rounded-md border px-3 py-2"
                             />
 
                             <textarea
                                 value={excerpt}
                                 onChange={(event) => setExcerpt(event.target.value)}
+                                className="min-h-24 w-full rounded-md border px-3 py-2"
                             />
 
                             <textarea
                                 value={body}
                                 onChange={(event) => setBody(event.target.value)}
+                                className="min-h-64 w-full rounded-md border px-3 py-2"
                             />
 
-                            <button type="button" onClick={handleSaveDraft}>
+                            <button 
+                                type="button" 
+                                onClick={handleSaveDraft}
+                                className="rounded-md border px-3 py-2 text-sm font-medium"
+                            >
                                 Save Draft
                             </button>
 
-                            <button type="button" onClick={handleSaveAndPublish}>
+                            <button 
+                                type="button" 
+                                onClick={handleSaveAndPublish}
+                                className="rounded-md border px-3 py-2 text-sm font-medium"
+                                >
                                 Save & Publish
                             </button>
 
                         </div>
                     )}
-                    {error && <p>{error}</p>}
-                    {successMessage && <p>{successMessage}</p>}
+                    {error && (
+                        <p className="w-full text-sm text-red-600">{error}</p>
+                    )}
+                    {successMessage && (
+                        <p className="w-full text-sm text-green-600">{successMessage}</p>
+                    )}
                 </div>
             )}
             {post.status === "PUBLISHED" && (
                 <div>
-                    <button type="button" onClick={handleArchive}>Archive</button>
+                    <button 
+                        type="button" 
+                        onClick={handleArchive}
+                        className="rounded-md border mt-4 px-3 py-2 text-sm font-medium hover:bg-gray-100"
+                        >
+                            Archive
+                        </button>
                 </div>
             )}
+            
         </div>
     );
 }

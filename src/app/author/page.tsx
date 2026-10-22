@@ -4,12 +4,22 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AuthorPostList from "@/components/author/AuthorPostList";
 import type { AuthorPost } from "@/types/author-post";
+import AuthorPostCard from "@/components/author/AuthorPostCard";
 
 export default function AuthorPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
     const [posts, setPosts] = useState<AuthorPost[]>([]);
+
+    const [activeFilter, setActiveFilter] = useState<
+            "ALL" | "DRAFT" | "PUBLISHED" | "ARCHIVED"
+        >("ALL")
+    
+        const visiblePosts =
+            activeFilter === "ALL"
+                ? posts
+                : posts.filter((post) => post.status === activeFilter);
 
     const draftPosts = posts.filter(
         (post) => post.status === "DRAFT"
@@ -88,32 +98,48 @@ export default function AuthorPage() {
     }
 
     return (
-        <main>
-            <h1>Author Dashboard</h1>
+        <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8">
+            <h1 className="text-3xl font-semibold">Author Dashboard</h1>
+            <div className="flex flex-wrap gap-2 border-b pb-3">
+                <button 
+                    onClick={() => setActiveFilter("ALL")}
+                    className={activeFilter === "ALL" ? 
+                    "rounded-md border px-3 py-2 text-sm font-medium" : 
+                    "rounded-md border px-3 py-2 text-sm font-medium"}
+                    >
+                        All
+                </button>
+                <button 
+                    onClick={() => setActiveFilter("DRAFT")}
+                    className={activeFilter === "DRAFT" ?
+                    "rounded-md border px-3 py-2 text-sm font-medium"
+                    : 
+                    "rounded-md border px-3 py-2 text-sm font-medium"}
+                    >
+                        Draft
+                </button>
+                <button 
+                    onClick={() => setActiveFilter("PUBLISHED")}
+                    className={activeFilter === "PUBLISHED" ? 
+                    "rounded-md border px-3 py-2 text-sm font-medium" : 
+                    "rounded-md border px-3 py-2 text-sm font-medium"}
+                    >
+                        Published
+                </button>
+                <button 
+                    onClick={() => setActiveFilter("ARCHIVED")}
+                    className={activeFilter === "ARCHIVED" ? 
+                    "rounded-md border px-3 py-2 text-sm font-medium" : 
+                    "rounded-md border px-3 py-2 text-sm font-medium"}
+                    >
+                        Archived
+                </button>
+            </div>
 
-            <section>
-                <h2>Drafts</h2>
-                <AuthorPostList 
-                    posts={draftPosts} 
-                    onPostUpdated={handlePostUpdated}
-                />
-            </section>
-
-            <section>
-                <h2>Published</h2>
-                <AuthorPostList 
-                    posts={publishedPosts} 
-                    onPostUpdated={handlePostUpdated}
-                />
-            </section>
-
-            <section>
-                <h2>Archived</h2>
-                <AuthorPostList 
-                    posts={archivedPosts} 
-                    onPostUpdated={handlePostUpdated}
-                />
-            </section>
+            <AuthorPostList 
+                posts={visiblePosts} 
+                onPostUpdated={handlePostUpdated}
+            />
         </main>
     )
 }
