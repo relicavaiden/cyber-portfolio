@@ -17,3 +17,25 @@ if (!sessionSecret) {
 const SESSION_SECRET: string = sessionSecret;
 
 export { SESSION_SECRET };
+
+const awsRegion = process.env.AWS_REGION;
+
+if (!awsRegion) {
+  throw new Error("AWS_REGION is required");
+}
+
+const s3Bucket = process.env.S3_BUCKET;
+
+if (!s3Bucket) {
+  throw new Error("S3_BUCKET is required");
+}
+
+const mediaBaseUrl = process.env.MEDIA_BASE_URL;
+
+if (!mediaBaseUrl) {
+  throw new Error("MEDIA_BASE_URL is required");
+}
+
+export const AWS_REGION: string = awsRegion;
+export const S3_BUCKET: string = s3Bucket;
+export const MEDIA_BASE_URL: string = mediaBaseUrl;

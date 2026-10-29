@@ -33,6 +33,16 @@ enum RelationshipType {
   RELATED
 }
 
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum MediaRole {
+  COVER
+  INLINE
+}
+
 model Series {
   id Int @id @default(autoincrement())
   title String
@@ -57,6 +67,7 @@ model Post {
   seriesEntry SeriesEntry?
 
   postTags PostTag[]
+  media PostMedia[]
 
   outgoingRelationships PostRelationship[] @relation("SourcePostRelationships")
   incomingRelationships PostRelationship[] @relation("TargetPostRelationships")
@@ -114,4 +125,37 @@ model User {
   passwordHash String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model MediaAsset {
+  id Int @id @default(autoincrement())
+  type MediaType
+  storageKey String @unique
+  url String @unique
+  mimeType String
+  altText String?
+  createdAt DateTime @default(now())
+
+  posts PostMedia[]
+}
+
+model PostMedia {
+  id Int @id @default(autoincrement())
+  postId Int
+  mediaAssetId Int
+  role MediaRole
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  mediaAsset MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, mediaAssetId, role])
+}
+
+model Session {
+  sid String @id @db.VarChar
+  sess Json
+  expire DateTime @db.Timestamp(6)
+
+  @@index([expire], map: "IDX_session_expire")
+  @@map("session")
 }

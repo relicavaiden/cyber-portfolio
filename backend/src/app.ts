@@ -10,6 +10,7 @@ import connectPgSimple from "connect-pg-simple"
 
 import { DATABASE_URL, SESSION_SECRET } from "./config/env.js"
 import authorRoutes from "./modules/author/author.routes.js";
+import mediaRoutes from "./modules/media/media.routes.js";
 
 const PgSession = connectPgSimple(session);
 
@@ -28,7 +29,7 @@ app.use(
 
         store: new PgSession({
             conString: DATABASE_URL,
-            createTableIfMissing: true,
+            createTableIfMissing: false,
         }),
 
         secret: SESSION_SECRET,
@@ -55,6 +56,7 @@ app.use("/api/author", authorRoutes)
 app.use("/api/posts", postRoutes)
 app.use("/api/series", seriesRoutes);
 app.use("/api/tags", tagRoutes);
+app.use("/api/media", mediaRoutes);
 app.use(errorHandler);
 
 export default app;
