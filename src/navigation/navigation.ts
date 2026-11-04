@@ -16,7 +16,7 @@ const home: NavigationItem = {
 const about: NavigationItem = {
     name: "About",
     path: "/about",
-    status: "available"
+    status: "coming-soon"
 };
 const projects: NavigationItem = {
     name: "Projects",
@@ -26,12 +26,12 @@ const projects: NavigationItem = {
 const blog: NavigationItem = {
     name: "Blog",
     path: "/blog",
-    status: "coming-soon"
+    status: "available"
 };
 const resume: NavigationItem = {
     name: "Resume",
     path: "/resume",
-    status: "coming-soon"
+    status: "available"
 };
 
 export const navigation: NavigationItem[] = [

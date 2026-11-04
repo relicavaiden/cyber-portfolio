@@ -2,7 +2,7 @@ import { ProjectsContent } from "./ProjectsContent";
 
 const Projects = () => {
     return (
-        <section>
+        <section className="w-full">
                     <ProjectsContent />
         </section>
     )

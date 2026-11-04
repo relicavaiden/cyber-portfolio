@@ -2,16 +2,27 @@
 
 import { usePerspective } from "@/context/PerspectiveContext";
 import ProjectCard from "@/components/projects/ProjectCard";
-import { vulnerableSupportTicketProject } from "@/data/projects";
+import { vulnerableSupportTicketProject, portfolioProject, jobConnectorProject, Project } from "@/data/projects";
 
+const projects: Project[] = [
+  vulnerableSupportTicketProject,
+  portfolioProject,
+  jobConnectorProject,
+];
 
 export const ProjectsContent = () => {
     const { perspective, changePerspective } = usePerspective();
 
     return (
-        <div className="flex flex-col gap-1">
-            <div className="space-y-8 p-2">
-                    <div className="flex gap-x-12 text-lg justify-center">
+        <div 
+            className={`flex w-full flex-col gap-1  ${
+                perspective === null
+                    ? "min-h-[70vh] items-center justify-center"
+                    : ""
+                }`}
+        >
+            <div className="w-full p-2">
+                    <div className="flex w-full justify-center  gap-x-12 text-lg">
                     <button
                         className={`text-2xl cursor-pointer focus-visible:outline-2 text-blue-600 ${
                             perspective === "engineering" 
@@ -36,12 +47,24 @@ export const ProjectsContent = () => {
 
             {perspective !== null && (
                 <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <ProjectCard
-                        title={vulnerableSupportTicketProject.title}
-                        summary={vulnerableSupportTicketProject.summary[perspective]}
-                        status={vulnerableSupportTicketProject.status}
-                        technologies={vulnerableSupportTicketProject.technologies[perspective]}
-                    />
+                    {projects.map((project) => {
+                    const summary = project.summary[perspective];
+                    const technologies = project.technologies[perspective];
+
+                    if (!summary || !technologies) {
+                        return null;
+                    }
+
+                    return (
+                        <ProjectCard
+                        key={project.title}
+                        title={project.title}
+                        summary={summary}
+                        status={project.status}
+                        technologies={technologies}
+                        />
+                    );
+                    })}
                 </section> 
                 )}
         </div>

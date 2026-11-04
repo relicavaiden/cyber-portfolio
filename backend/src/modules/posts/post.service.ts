@@ -1,19 +1,54 @@
 import prisma from "../../lib/prisma.js";
 import type { CreatePostInput, UpdatePostInput } from "./post.schema.js";
 import { AppError } from "../../lib/AppError.js";
-import { PostStatus } from "../../generated/prisma/enums.js";
+import { MediaRole, PostStatus } from "../../generated/prisma/enums.js";
 
 export const getPublishedPosts = async () => {
     const posts = await prisma.post.findMany(
         {
             where: {
                 status: PostStatus.PUBLISHED,
-            }
-        }
-    )
+            },
+            include: {
+                seriesEntry: {
+                    include: {
+                        series: true,
+                    },
+                },
+                postTags: {
+                    include: {
+                        tag: true,
+                    },
+                },
+            },
+        });
 
-    return posts;
-}
+        const normalizedPosts = posts.map((post) => {
+            return {
+                id: post.id,
+                title: post.title,
+                slug: post.slug,
+                excerpt: post.excerpt,
+                publishedAt: post.publishedAt,
+
+                series: post.seriesEntry
+                    ? {
+                        title: post.seriesEntry.series.title,
+                        slug: post.seriesEntry.series.slug,
+                    }
+                    : null,
+
+                tags: post.postTags.map((postTag) => {
+                    return {
+                        name: postTag.tag.name,
+                        slug: postTag.tag.slug,
+                    };
+                }),
+            }
+        })
+
+    return normalizedPosts;
+};
 
 export const createPost = async (input: CreatePostInput) => {
     const slug = input.title
@@ -79,6 +114,11 @@ export const getPostBySlug = async (slug: string) => {
                     sourcePost: true,
                 },
             },
+            media: {
+                include: {
+                    mediaAsset: true,
+                },
+            },
         }
     });
 
@@ -86,7 +126,59 @@ export const getPostBySlug = async (slug: string) => {
         throw new AppError("Post not found", 404);
     }
 
-    return post;
+    const coverMedia = post.media.find(
+        (media) => media.role === MediaRole.COVER
+    );
+
+    const normalizedPost = {
+        id: post.id,
+        title: post.title,
+        slug: post.slug,
+        excerpt: post.excerpt,
+        body: post.body,
+        publishedAt: post.publishedAt,
+
+        series: post.seriesEntry
+            ? {
+                title: post.seriesEntry.series.title,
+                slug: post.seriesEntry.series.slug,
+            }
+            : null,
+
+        tags: post.postTags.map((postTag) => {
+            return {
+                name: postTag.tag.name,
+                slug: postTag.tag.slug,
+            };
+        }),
+
+        coverImage: coverMedia
+            ? {
+                url: coverMedia.mediaAsset.url,
+                altText: coverMedia.mediaAsset.altText,
+            }
+            : null,
+
+            outgoingRelationships: post.outgoingRelationships.map((relationship) => {
+                return {
+                    relationshipType: relationship.relationshipType,
+                    anchor: relationship.targetAnchor,
+                    title: relationship.targetPost.title,
+                    slug: relationship.targetPost.slug,
+                }
+            }),
+
+            incomingRelationships: post.incomingRelationships.map((relationship) => {
+                return {
+                    relationshipType: relationship.relationshipType,
+                    anchor: relationship.targetAnchor,
+                    title: relationship.sourcePost.title,
+                    slug: relationship.sourcePost.slug,
+                }
+            }),
+    }
+
+    return normalizedPost;
 }
 
 export const publishPost = async (slug: string) => {
