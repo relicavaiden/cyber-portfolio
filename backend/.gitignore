@@ -6,3 +6,5 @@ node_modules
 
 backend/cookies.txt
 cookies.txt
+
+dist/

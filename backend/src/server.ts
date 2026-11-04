@@ -1,7 +1,7 @@
 import app from "./app.js";
 import prisma from "./lib/prisma.js";
 
-const PORT = 4000
+const PORT = Number(process.env.PORT ?? 4000);
 
 const startServer = async () => {
         try {
