@@ -2,6 +2,11 @@ import BlogPostHeader from "@/components/blog/BlogPostHeader";
 import type { BlogPostDetail } from "@/types/blog-post";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
+const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:4000";
+
 
 type BlogPostPageProps = {
     params: Promise<{
@@ -15,7 +20,7 @@ export default async function BlogPostPage({
     const { slug } = await params;
 
     const response = await fetch(
-        `http://localhost:4000/api/posts/${slug}`
+        `${API_BASE_URL}/api/posts/${slug}`
     );
 
     if (response.status === 404) {

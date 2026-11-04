@@ -1,8 +1,12 @@
 import BlogPostCard from "@/components/blog/BlogPostCard";
 import { BlogPostSummary } from "@/types/blog-post";
 
+export const dynamic = "force-dynamic";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:4000";
+
 export default async function BlogPage() {
-    const response = await fetch("http://localhost:4000/api/posts");
+    const response = await fetch(`${API_BASE_URL}/api/posts`);
 
     const posts: BlogPostSummary[] = await response.json();
 
