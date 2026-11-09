@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "@/lib/api";
 import type { AuthorPost, UpdatePostInput } from "@/types/author-post";
 import { useState } from "react";
 
@@ -28,7 +29,7 @@ export default function AuthorPostCard({
         };
 
         const response = await fetch(
-            `http://localhost:4000/api/posts/${post.slug}`,
+            `${API_BASE_URL}/api/posts/${post.slug}`,
             {
                 method: "PATCH",
                 credentials: "include",
@@ -54,7 +55,7 @@ export default function AuthorPostCard({
         setSuccessMessage("");
 
         const response = await fetch(
-            `http://localhost:4000/api/posts/${post.slug}/publish`,
+            `${API_BASE_URL}/api/posts/${post.slug}/publish`,
             {
                 method: "PATCH",
                 credentials: "include"
@@ -77,7 +78,7 @@ export default function AuthorPostCard({
         setSuccessMessage("");
 
         const response = await fetch(
-            `http://localhost:4000/api/posts/${post.slug}/archive`,
+            `${API_BASE_URL}/api/posts/${post.slug}/archive`,
             {
                 method: "PATCH",
                 credentials: "include",

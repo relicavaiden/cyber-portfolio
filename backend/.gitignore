@@ -8,3 +8,5 @@ backend/cookies.txt
 cookies.txt
 
 dist/
+
+.env.docker

@@ -3,6 +3,8 @@
 import { useState, type SubmitEvent } from "react";
 import { useRouter } from "next/navigation";
 
+import { API_BASE_URL } from "@/lib/api";
+
 export default function LoginForm() {
     const router = useRouter();
     const [email, setEmail] = useState("");
@@ -13,7 +15,7 @@ export default function LoginForm() {
     ) => {
         event.preventDefault();
 
-    const response = await fetch("http://localhost:4000/api/auth/login", {
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

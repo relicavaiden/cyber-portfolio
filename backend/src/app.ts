@@ -14,14 +14,20 @@ import mediaRoutes from "./modules/media/media.routes.js";
 
 const PgSession = connectPgSimple(session);
 
-const app = express()
-app.use(express.json())
+const corsOrigin = process.env.CORS_ORIGIN ?? "http://localhost:3000";
+
+const app = express();
+
+app.set("trust proxy", 1);
+
+app.use(express.json());
 app.use(
     cors({
-        origin: "http://localhost:3000",
+        origin: corsOrigin,
         credentials: true,
     })
 );
+
 
 app.use(
     session({
