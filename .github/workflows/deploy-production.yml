@@ -1,0 +1,247 @@
+name: Deploy Portfolio to AWS
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: portfolio-production
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+
+  FRONTEND_ECR_REPOSITORY: relicavaiden-portfolio-frontend
+  BACKEND_ECR_REPOSITORY: relicavaiden-portfolio-backend
+
+  FRONTEND_TASK_FAMILY: default-relicavaiden-portfolio-frontend
+  BACKEND_TASK_FAMILY: default-relicavaiden-portfolio-backend
+
+  NEXT_PUBLIC_API_BASE_URL: https://api.relicavaiden.com
+
+jobs:
+  deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          allowed-account-ids: "496199073264"
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push backend image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          BACKEND_IMAGE="$REGISTRY/$BACKEND_ECR_REPOSITORY:$GITHUB_SHA"
+
+          docker build \
+            --platform linux/amd64 \
+            -t "$BACKEND_IMAGE" \
+            ./backend
+
+          docker push "$BACKEND_IMAGE"
+
+          echo "BACKEND_IMAGE=$BACKEND_IMAGE" >> "$GITHUB_ENV"
+
+      - name: Build and push frontend image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          FRONTEND_IMAGE="$REGISTRY/$FRONTEND_ECR_REPOSITORY:$GITHUB_SHA"
+
+          docker build \
+            --platform linux/amd64 \
+            --build-arg NEXT_PUBLIC_API_BASE_URL="$NEXT_PUBLIC_API_BASE_URL" \
+            -t "$FRONTEND_IMAGE" \
+            .
+
+          docker push "$FRONTEND_IMAGE"
+
+          echo "FRONTEND_IMAGE=$FRONTEND_IMAGE" >> "$GITHUB_ENV"
+
+      - name: Register new backend task definition
+        id: backend-task
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition "$BACKEND_TASK_FAMILY" \
+            --query taskDefinition \
+            --output json > backend-current.json
+
+          jq -e \
+            '.containerDefinitions[] | select(.name == "Main")' \
+            backend-current.json > /dev/null
+
+          jq \
+            --arg IMAGE "$BACKEND_IMAGE" \
+            '
+            .containerDefinitions |= map(
+              if .name == "Main"
+              then .image = $IMAGE
+              else .
+              end
+            )
+            |
+            del(
+              .taskDefinitionArn,
+              .revision,
+              .status,
+              .requiresAttributes,
+              .compatibilities,
+              .registeredAt,
+              .registeredBy
+            )
+            ' \
+            backend-current.json > backend-new.json
+
+          TASK_DEFINITION_ARN=$(
+            aws ecs register-task-definition \
+              --cli-input-json file://backend-new.json \
+              --query 'taskDefinition.taskDefinitionArn' \
+              --output text
+          )
+
+          echo "task_definition_arn=$TASK_DEFINITION_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Register new frontend task definition
+        id: frontend-task
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition "$FRONTEND_TASK_FAMILY" \
+            --query taskDefinition \
+            --output json > frontend-current.json
+
+          jq -e \
+            '.containerDefinitions[] | select(.name == "Main")' \
+            frontend-current.json > /dev/null
+
+          jq \
+            --arg IMAGE "$FRONTEND_IMAGE" \
+            '
+            .containerDefinitions |= map(
+              if .name == "Main"
+              then .image = $IMAGE
+              else .
+              end
+            )
+            |
+            del(
+              .taskDefinitionArn,
+              .revision,
+              .status,
+              .requiresAttributes,
+              .compatibilities,
+              .registeredAt,
+              .registeredBy
+            )
+            ' \
+            frontend-current.json > frontend-new.json
+
+          TASK_DEFINITION_ARN=$(
+            aws ecs register-task-definition \
+              --cli-input-json file://frontend-new.json \
+              --query 'taskDefinition.taskDefinitionArn' \
+              --output text
+          )
+
+          echo "task_definition_arn=$TASK_DEFINITION_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy backend
+        run: |
+          aws ecs update-express-gateway-service \
+            --service-arn "${{ vars.ECS_BACKEND_SERVICE_ARN }}" \
+            --task-definition-arn "${{ steps.backend-task.outputs.task_definition_arn }}" \
+            > /dev/null
+
+      - name: Deploy frontend
+        run: |
+          aws ecs update-express-gateway-service \
+            --service-arn "${{ vars.ECS_FRONTEND_SERVICE_ARN }}" \
+            --task-definition-arn "${{ steps.frontend-task.outputs.task_definition_arn }}" \
+            > /dev/null
+
+      - name: Wait for backend deployment
+        env:
+          SERVICE_ARN: ${{ vars.ECS_BACKEND_SERVICE_ARN }}
+          EXPECTED_TASK_DEFINITION: ${{ steps.backend-task.outputs.task_definition_arn }}
+        run: |
+          for attempt in $(seq 1 60); do
+            ACTIVE_TASK_DEFINITIONS=$(
+              aws ecs describe-express-gateway-service \
+                --service-arn "$SERVICE_ARN" \
+                --query 'service.activeConfigurations[].taskDefinitionArn' \
+                --output text
+            )
+
+            if [ "$ACTIVE_TASK_DEFINITIONS" = "$EXPECTED_TASK_DEFINITION" ]; then
+              echo "Backend deployment is active."
+              exit 0
+            fi
+
+            echo "Waiting for backend deployment..."
+            sleep 10
+          done
+
+          echo "Backend deployment did not stabilize in time."
+          exit 1
+
+      - name: Verify backend health
+        run: |
+          curl \
+            --fail \
+            --show-error \
+            --silent \
+            --retry 12 \
+            --retry-delay 10 \
+            --retry-all-errors \
+            https://api.relicavaiden.com/api/health
+
+      - name: Wait for frontend deployment
+        env:
+          SERVICE_ARN: ${{ vars.ECS_FRONTEND_SERVICE_ARN }}
+          EXPECTED_TASK_DEFINITION: ${{ steps.frontend-task.outputs.task_definition_arn }}
+        run: |
+          for attempt in $(seq 1 60); do
+            ACTIVE_TASK_DEFINITIONS=$(
+              aws ecs describe-express-gateway-service \
+                --service-arn "$SERVICE_ARN" \
+                --query 'service.activeConfigurations[].taskDefinitionArn' \
+                --output text
+            )
+
+            if [ "$ACTIVE_TASK_DEFINITIONS" = "$EXPECTED_TASK_DEFINITION" ]; then
+              echo "Frontend deployment is active."
+              exit 0
+            fi
+
+            echo "Waiting for frontend deployment..."
+            sleep 10
+          done
+
+          echo "Frontend deployment did not stabilize in time."
+          exit 1
+
+      - name: Verify frontend
+        run: |
+          curl \
+            --fail \
+            --show-error \
+            --silent \
+            --output /dev/null \
+            --retry 12 \
+            --retry-delay 10 \
+            --retry-all-errors \
+            https://relicavaiden.com
