@@ -7,3 +7,4 @@ docker-compose*
 npm-debug.log*
 .env
 .env.*
+backend/
