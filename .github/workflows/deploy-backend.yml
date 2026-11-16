@@ -1,0 +1,195 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yml"
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portfolio-backend-production
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: relicavaiden-portfolio-backend
+  TASK_FAMILY: default-relicavaiden-portfolio-backend
+
+jobs:
+  validate:
+    name: Test backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Block automatic schema migrations
+        if: github.event_name == 'push'
+        run: |
+          BEFORE="${{ github.event.before }}"
+
+          if git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            if git diff --name-only "$BEFORE" "$GITHUB_SHA" \
+              | grep -q '^backend/prisma/migrations/'; then
+
+              echo "::error::Prisma migration detected."
+              echo "Apply the migration through the controlled ECS migration process first."
+              echo "Then run this workflow manually."
+              exit 1
+            fi
+          fi
+
+      - name: Set up Node
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run tests
+        working-directory: backend
+        run: npm test --if-present
+
+      - name: Compile backend
+        working-directory: backend
+        run: npm run build
+
+  deploy:
+    name: Deploy backend
+    needs: validate
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          allowed-account-ids: "496199073264"
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2.1.7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4.4.1
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v7.4.0
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          cache-from: type=gha,scope=portfolio-backend
+          cache-to: type=gha,mode=max,scope=portfolio-backend
+
+      - name: Register backend task definition
+        id: task
+        run: |
+          IMAGE="${{ steps.login-ecr.outputs.registry }}/${ECR_REPOSITORY}:${GITHUB_SHA}"
+
+          aws ecs describe-task-definition \
+            --task-definition "$TASK_FAMILY" \
+            --query taskDefinition \
+            --output json > current.json
+
+          jq -e \
+            '.containerDefinitions[] | select(.name == "Main")' \
+            current.json > /dev/null
+
+          jq \
+            --arg IMAGE "$IMAGE" \
+            '
+            .containerDefinitions |= map(
+              if .name == "Main"
+              then .image = $IMAGE
+              else .
+              end
+            )
+            |
+            del(
+              .taskDefinitionArn,
+              .revision,
+              .status,
+              .requiresAttributes,
+              .compatibilities,
+              .registeredAt,
+              .registeredBy
+            )
+            ' \
+            current.json > new.json
+
+          TASK_DEFINITION_ARN=$(
+            aws ecs register-task-definition \
+              --cli-input-json file://new.json \
+              --query 'taskDefinition.taskDefinitionArn' \
+              --output text
+          )
+
+          echo "task_definition_arn=$TASK_DEFINITION_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy backend
+        run: |
+          aws ecs update-express-gateway-service \
+            --service-arn "${{ vars.ECS_BACKEND_SERVICE_ARN }}" \
+            --task-definition-arn "${{ steps.task.outputs.task_definition_arn }}" \
+            > /dev/null
+
+      - name: Wait for backend
+        env:
+          SERVICE_ARN: ${{ vars.ECS_BACKEND_SERVICE_ARN }}
+          EXPECTED_TASK_DEFINITION: ${{ steps.task.outputs.task_definition_arn }}
+        run: |
+          for attempt in $(seq 1 60); do
+            ACTIVE=$(
+              aws ecs describe-express-gateway-service \
+                --service-arn "$SERVICE_ARN" \
+                --query 'service.activeConfigurations[].taskDefinitionArn' \
+                --output text
+            )
+
+            if [ "$ACTIVE" = "$EXPECTED_TASK_DEFINITION" ]; then
+              echo "Backend deployment is active."
+              exit 0
+            fi
+
+            echo "Waiting for backend deployment..."
+            sleep 10
+          done
+
+          echo "Backend deployment did not stabilize."
+          exit 1
+
+      - name: Verify backend health
+        run: |
+          curl \
+            --fail \
+            --show-error \
+            --silent \
+            --retry 12 \
+            --retry-delay 10 \
+            --retry-all-errors \
+            https://api.relicavaiden.com/api/health
