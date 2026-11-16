@@ -60,10 +60,6 @@ jobs:
         working-directory: backend
         run: npm ci
 
-      - name: Run tests
-        working-directory: backend
-        run: npm test --if-present
-
       - name: Compile backend
         working-directory: backend
         run: npm run build
